@@ -150,7 +150,7 @@ addx -6
 addx -11
 noop
 noop
-noop", Result = "13140/        ")]
+noop", Result = "13140/<ffff73><3108e9><0cf3cc><f70e86><10f013><8f0739><f0fc7c><0e01e6>")]
     class Day10 : IDay
     {
         public string Calc(string input)
@@ -184,7 +184,7 @@ noop", Result = "13140/        ")]
             // treat each block of 5 pixels as a 4-bit little endian binary number (ignoring last pixel of block)
             var screenCharBlocks = screen.Chunk(5).Select(row => row.SkipLast(1).Select((b, index) => (b) ? (1 << index) : 0).Sum()).ToArray();
             // collect together the 6 blocks making up each of 8 characters and test them against the alphabet letters
-            var result2 = new string(Enumerable.Range(0, 8).Select(chIndex => letters.GetValueOrDefault(Enumerable.Range(0, 6).Select(y => (1 << (4 * y)) * screenCharBlocks[y * 8 + chIndex]).Sum(), ' ')).ToArray());
+            var result2 = String.Join("", Enumerable.Range(0, 8).Select(chIndex => Enumerable.Range(0, 6).Select(y => (1 << (4 * y)) * screenCharBlocks[y * 8 + chIndex]).Sum()).Select(n => letters.ContainsKey(n) ? letters[n].ToString() : "<" + n.ToString("x6") + ">"));
            
             return string.Format("{0}/{1}", result1.ToString(), result2);
         }
