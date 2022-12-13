@@ -27,33 +27,22 @@ abdefghi", Result = "31/29")]
             var getShortest = (IEnumerable<(int x, int y)> starts) =>
                 {
                     var dirs = new (int x, int y)[] { (1, 0), (-1, 0), (0, 1), (0, -1)};
-                    var mapDirs = map.Select(row => row.Select(h => (x:0, y:0)).ToArray()).ToArray();
-                    var opens = starts.Select(coord => (n:0, x:coord.x, y:coord.y)).ToArray();
+                    var mapDirs = map.Select(row => row.Select(h => (n:0, x:0, y:0)).ToArray()).ToArray();
+                    var opens = starts.Select(coord => (n:0, x:coord.x, y:coord.y, dir:(x:0, y:0))).ToArray();
                     while (true)
                     {
                         opens = opens.Select(
                             current => 
-                                dirs.Select(
-                                    dir =>
-                                    {
-                                        (int n, int x, int y) next = (current.n + 1, current.x + dir.x, current.y + dir.y);
-                                        if (next.x >= 0 && next.x < map[0].Length && next.y >= 0 && next.y < map.Length && mapDirs[next.y][next.x] == (0,0) && map[next.y][next.x] <= map[current.y][current.x] + 1)
-                                        {
-                                            mapDirs[next.y][next.x] = (-dir.x, -dir.y);
-                                            return next;
-                                        }
-                                        else
-                                        {
-                                            return (n:0, x:0, y:0);
-                                        }
-                                    }
-                                )
-                        ).SelectMany(t => t).Where(t => t.n > 0).ToArray();
-                        int ret = opens.Where(t => t.x == exit.x && t.y == exit.y).FirstOrDefault((n:0,0,0)).n;
-                        if (ret > 0)
-                        {
-                            return ret;
-                        }
+                                dirs
+                                .Select(dir => (n:current.n + 1, x:current.x + dir.x, y:current.y + dir.y, dir:dir))
+                                .Where(next => next.x >= 0 && next.x < map[0].Length && next.y >= 0 && next.y < map.Length && mapDirs[next.y][next.x].n == 0 && map[next.y][next.x] <= map[current.y][current.x] + 1)
+                                .Select(next =>
+                                {
+                                    mapDirs[next.y][next.x] = (next.n, -next.dir.x, -next.dir.y);
+                                    return next;
+                                })
+                        ).SelectMany(t => t).ToArray();
+                        if (mapDirs[exit.y][exit.x].n > 0) return mapDirs[exit.y][exit.x].n;
                     }
                 };
 
