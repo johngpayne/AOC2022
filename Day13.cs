@@ -65,7 +65,7 @@ namespace AOC
                 {
                     return p0.Count().CompareTo(p1.Count());
                 }
-                var compare = (p0.First() is int && p1.First() is int) ? ((int)p0.First()).CompareTo((int)p1.First()) : Compare((p0.First() is List<object>) ? p0.First() as List<object> : new List<object>{ (int)p0.First() }, (p1.First() is List<object>) ? p1.First() as List<object> : new List<object>{ (int)p1.First() });
+                var compare = (p0.First() is int && p1.First() is int) ? ((int)p0.First()).CompareTo((int)p1.First()) : Compare((p0.First() is List<object>) ? (p0.First() as List<object>)! : new List<object>{ (int)p0.First() }, (p1.First() is List<object>) ? (p1.First() as List<object>)! : new List<object>{ (int)p1.First() });
                 return (compare != 0) ? compare : Compare(p0.Skip(1), p1.Skip(1));
             }
 
