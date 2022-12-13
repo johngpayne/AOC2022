@@ -28,8 +28,7 @@ namespace AOC
 [[]]
 
 [1,[2,[3,[4,[5,6,7]]]],8,9]
-[1,[2,[3,[4,[5,6,0]]]],8,9]
-", Result = "13/140")]
+[1,[2,[3,[4,[5,6,0]]]],8,9]", Result = "13/140")]
     class Day13 : IDay
     {
         public string Calc(string input)
@@ -58,7 +57,7 @@ namespace AOC
             }
 
             var parseStr = (string str) => ParseGroup(new Stack<char>(str.Reverse()));
-            var pairs = input.Split("\n").Chunk(3).Select(c => c.SkipLast(1).Select(line => parseStr(line)).ToArray());
+            var pairs = input.Split("\n").Where(line => line.Trim() != "").Chunk(2).Select(c => c.Select(line => parseStr(line)).ToArray());
 
             int Compare(IEnumerable<object> p0, IEnumerable<object> p1)
             {
