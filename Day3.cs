@@ -13,7 +13,7 @@ ttgJtRGJQctTZtZT
 CrZsJsPPZsGzwwsLwLmpwMDw", Result = "157/70")]
     class Day3 : IDay
     {
-        public string Calc(string input)
+        public string Calc(string input, bool test)
         {
             var lines = input.Split('\n').Where(line => line.Trim() != "");
             var scoreChar = (char c) => { if (Char.IsAsciiLetterLower(c)) return (1 + (c - 'a')); else if (Char.IsAsciiLetterUpper(c)) return (27 + (c - 'A')); else return 0; };

@@ -10,7 +10,7 @@ namespace AOC
 503,4 -> 502,4 -> 502,9 -> 494,9", Result = "24/93")]
     class Day14 : IDay
     {
-        public string Calc(string input)
+        public string Calc(string input, bool test)
         {
             var MinMaxRange = (int p0, int p1) => Enumerable.Range(Math.Min(p0, p1), 1 + Math.Abs(p0 - p1));
             var map = input.Split("\n").Select(line => line.Trim()).Where(line => line != "").Select(line => line.Split(" -> ").Select(coord => coord.Split(',').Select(s => int.Parse(s))).Select(a => (x:a.First(), y:a.Last()))).Select(strip => strip.Select((p, i) => Enumerable.Repeat(p, (i == 0 || i == strip.Count() - 1) ? 1 : 2)).SelectMany(a => a).Chunk(2).Select(p => MinMaxRange(p[0].x, p[1].x).Select(x => MinMaxRange(p[0].y, p[1].y).Select(y => (x:x,y:y))).SelectMany(c => c)).SelectMany(c => c)).SelectMany(c => c).Distinct().ToHashSet();

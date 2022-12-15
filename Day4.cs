@@ -13,7 +13,7 @@ namespace AOC
 2-6,4-8", Result = "2/4")]
     class Day4 : IDay
     {
-        public string Calc(string input)
+        public string Calc(string input, bool test)
         {
             var lines = input.Split('\n').Where(line => line != "").Select(line => line.Split(',').Select(part => { var vals = part.Split('-').Select(str => int.Parse(str)); return new Range(vals.ElementAt(0), vals.ElementAt(1)); }));
             var result1 = lines.Count(ranges => { var r0 = ranges.ElementAt(0); var r1 = ranges.ElementAt(1); return r0.Contains(r1) || r1.Contains(r0); });

@@ -16,7 +16,7 @@ move 2 from 2 to 1
 move 1 from 1 to 2", Result = "CMZ/MCD")]
     class Day5 : IDay
     {
-        public string Calc(string input)
+        public string Calc(string input, bool test)
         {
             var lines = input.Split('\n');
             var lineNotEmpty = (string line) => line.Trim() != "";

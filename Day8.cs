@@ -12,7 +12,7 @@ namespace AOC
 35390", Result = "21/8")]
     class Day8 : IDay
     {
-        public string Calc(string input)
+        public string Calc(string input, bool test)
         {
             var heights = input.Split("\n").Select(line => line.Trim()).Where(line => line != "").Select(line => line.Select(ch => ch - '0').ToArray()).ToArray();
             var results = Enumerable.Range(0, heights.Length).Select(

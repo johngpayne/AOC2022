@@ -12,7 +12,7 @@ acctuvwj
 abdefghi", Result = "31/29")]
     class Day12 : IDay
     {
-        public string Calc(string input)
+        public string Calc(string input, bool test)
         {
             var lines = input.Split("\n").Select(line => line.Trim()).Where(line => line != "");
             var map  = lines.Select(line => line.Select(ch => ch - 'a').ToArray()).ToArray();

@@ -10,7 +10,7 @@ B X
 C Z", Result = "15/12")]
     class Day2 : IDay
     {
-        public string Calc(string input)
+        public string Calc(string input, bool test)
         {
             return string.Join('/', Enumerable.Range(0, 2).Select(i => 
             {

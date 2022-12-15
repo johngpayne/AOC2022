@@ -15,7 +15,7 @@ L 5
 R 2", Result = "13/1")]
     class Day9 : IDay
     {
-        public string Calc(string input)
+        public string Calc(string input, bool test)
         {
             var insts = input.Split('\n').Select(line => line.Split(' ')).Where(p => p.Length == 2).Select(p => (p[0][0], int.Parse(p[1])));
             var dirs = new Dictionary<char,(int,int)>() { {'U', (0, -1)}, {'D', (0, 1)}, {'L', (-1,0)}, {'R', (1,0)} };

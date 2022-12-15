@@ -153,7 +153,7 @@ noop
 noop", Result = "13140/<ffff73><3108e9><0cf3cc><f70e86><10f013><8f0739><f0fc7c><0e01e6>")]
     class Day10 : IDay
     {
-        public string Calc(string input)
+        public string Calc(string input, bool test)
         {
             var insts = input.Split('\n').Select(inst => inst.Trim()).Where(inst => inst != "");
             var x = 1;

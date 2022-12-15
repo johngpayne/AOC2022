@@ -31,7 +31,7 @@ namespace AOC
 [1,[2,[3,[4,[5,6,0]]]],8,9]", Result = "13/140")]
     class Day13 : IDay
     {
-        public string Calc(string input)
+        public string Calc(string input, bool test)
         {
             var parseNumber = (Stack<char> buffer) => buffer.PopWhile(ch => char.IsAsciiDigit(ch)).Aggregate(0, (agg, ch) => 10 * agg + (ch - '0'));
 

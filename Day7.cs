@@ -30,7 +30,7 @@ $ ls
 7214296 k", Result = "95437/24933642")]
     class Day7 : IDay
     {
-        public string Calc(string input)
+        public string Calc(string input, bool test)
         {
             var lines = input.Split('\n').Select(s => s.Trim()).Where(s => s != "").Skip(1);
             var root = new Dir();

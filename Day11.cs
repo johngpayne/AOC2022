@@ -34,7 +34,7 @@ Monkey 3:
     If false: throw to monkey 1", Result="10605/2713310158")]
     class Day11 : IDay
     {
-        public string Calc(string input)
+        public string Calc(string input, bool test)
         {
             var monkeys = input.Split("\n").Select(line => line.Trim()).Where(line => line != "").Chunk(6).Select((setup, index) =>
             {
