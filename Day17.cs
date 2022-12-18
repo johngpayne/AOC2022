@@ -46,22 +46,22 @@ namespace AOC
 
             long FindPattern(long num)
             {
-                var rows = new List<int>{255}; 
+                var rows = new List<int>{ 255 }; 
                 int windIndex = 0;
-                var cycleChecks = new List<(int height, int[] lastRows)>();
+                var cycleChecks = new List<(int height, int[] lastRows)>{ (0, new int[]{}) };
                 while (true)
                 {
                     for (var rockIndex = 0; rockIndex < shapes.Length; rockIndex++)
                     {
                         rows = DropRock(rows, ref windIndex, rockIndex);
-                    }     
-                    var lastRows = rows.TakeLast(20).ToArray();
-                    var cycleStart = cycleChecks.FindLastIndex(cycle => cycle.lastRows.SequenceEqual(lastRows));
-                    cycleChecks.Add((rows.Count - 1, lastRows));
-                    if (cycleStart >= 0)
+                    }
+                    cycleChecks.Add((rows.Count - 1, rows.TakeLast(20).ToArray()));     
+                    var cycleStart = cycleChecks.FindIndex(cycle => cycle.lastRows.SequenceEqual(cycleChecks.Last().lastRows));
+                    if (cycleStart != cycleChecks.Count - 1)
                     {
-                        var loop = (cycleChecks.Count - cycleStart - 1) * shapes.Length;
-                        return num / loop * (cycleChecks[cycleChecks.Count - 1].height - cycleChecks[cycleStart].height) + cycleChecks[(int)(num % loop) / shapes.Length - 1].height;
+                        long rem;
+                        var div = Math.DivRem(num / shapes.Length - cycleStart, (cycleChecks.Count - 1 - cycleStart), out rem);
+                        return div * (cycleChecks.Last().height - cycleChecks[cycleStart].height) + cycleChecks[cycleStart + (int)rem].height;
                     }
                 }
             }
