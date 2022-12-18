@@ -31,27 +31,28 @@ namespace AOC
             
             var unbounded = new HashSet<int[]>(Enumerable.Repeat(new int[] {0, 0, 0}, 1), voxelComparer);
             var bounded = new HashSet<int[]>(voxelComparer);
-            var holeBorders = voxelBorders.Distinct(voxelComparer).Select(coord => {
+            var holeBorders = voxelBorders.Distinct(voxelComparer).Select(coord => 
+            {
                 if (bounded.Contains(coord))
                 {
                     return 0;
                 }
                 var borders = new int[][]{ coord };
-                var coords = new HashSet<int[]>(borders, voxelComparer);
+                var used = new HashSet<int[]>(borders, voxelComparer);
                 while (true)
                 {
-                    var newBorders = borders.Select(v => voxelNeighbours(v)).SelectMany(v => v).Distinct(voxelComparer).Where(v => !voxels.Contains(v) && !coords.Contains(v)).ToArray();                    
-                    if (newBorders.Any(v => unbounded.Contains(v)))
-                    {
-                        unbounded.UnionWith(coords);
-                        return 0;
-                    }
+                    var newBorders = borders.Select(v => voxelNeighbours(v)).SelectMany(v => v).Distinct(voxelComparer).Where(v => !voxels.Contains(v) && !used.Contains(v)).ToArray();                    
                     if (newBorders.Count() == 0)
                     {
-                        bounded.UnionWith(coords);
-                        return coords.Select(c => voxelNeighbours(c).Where(v => !coords.Contains(v))).Sum(b => b.Count());
+                        bounded.UnionWith(used);
+                        return used.Select(c => voxelNeighbours(c).Where(v => !used.Contains(v))).Sum(b => b.Count());
                     }
-                    coords.UnionWith(newBorders);
+                    if (newBorders.Any(v => unbounded.Contains(v)))
+                    {
+                        unbounded.UnionWith(used);
+                        return 0;
+                    }
+                    used.UnionWith(newBorders);
                     borders = newBorders;                
                 }
             }).Sum();
