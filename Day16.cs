@@ -35,10 +35,10 @@ Valve JJ has flow rate=21; tunnel leads to valve II", Result = "1651/1707")]
                 {
                     for (var posIndex = 0; posIndex < numPos; ++posIndex)
                     {
-                        var newAttempts = new List<(int[] pos, long open, int vented, int venting, long[] visited)>();
-                        foreach (var attempt in attempts)
+                        T[] ReplaceAtIndex<T>(T[] a, Func<T,T> f) { return a.Select((v, i) => i == posIndex ? f(v) : v).ToArray(); }
+                        var expandAttempt = ((int[] pos, long open, int vented, int venting, long[] visited) attempt) =>
                         {
-                            T[] ReplaceAtIndex<T>(T[] a, Func<T,T> f) { return a.Select((v, i) => i == posIndex ? f(v) : v).ToArray(); }
+                            var newAttempts = new List<(int[] pos, long open, int vented, int venting, long[] visited)>();
                             if (attempt.open == ((long)1 << (tunnels.Count())) - 1)
                             {
                                 newAttempts.Add(attempt);
@@ -59,8 +59,9 @@ Valve JJ has flow rate=21; tunnel leads to valve II", Result = "1651/1707")]
                                     }
                                 }
                             }
-                        }
-                        attempts = newAttempts;
+                            return newAttempts;
+                        };
+                        attempts = attempts.AsParallel().Select(attempt => expandAttempt(attempt)).SelectMany(a => a).ToList();
                     }
                     var limitAttempts = (IEnumerable<(int[], long, int vented, int, long[])> ar, int n) => (ar.Count() > n) ? ar.OrderByDescending(a => a.vented).Take(n) : ar;
                     attempts = limitAttempts(attempts.Select(m => (m.pos, m.open, m.vented + m.venting, m.venting, m.visited)), min * 1000).ToList();

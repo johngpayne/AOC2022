@@ -70,7 +70,13 @@ namespace AOC
                         if (!testOnly && testPassed)
                         {
                             Task<string> getInput = Helper.GetInputForDay(day, session);
-                            tasks.Add(getInput.ContinueWith(task => dayResults.Add(day, "Test passed, actual result: " + dayCalc!.Calc(task.Result, false))));
+                            tasks.Add(getInput.ContinueWith(task => 
+                            {
+                                var watch = System.Diagnostics.Stopwatch.StartNew();
+                                string result = dayCalc!.Calc(task.Result, false);
+                                watch.Stop();
+                                dayResults.Add(day, string.Format("Test passed, actual result: {0} (took {1}ms)", result, watch.ElapsedMilliseconds));
+                            }));
                         }
                     }
                     else
@@ -80,8 +86,8 @@ namespace AOC
                 }
             }
 
-            Task.WaitAll(tasks.ToArray());            
-            
+            Task.WaitAll(tasks.ToArray());
+
             for (int dayIndex = 1; dayIndex <= 25; ++dayIndex)
             {
                 var day = dayIndex;
@@ -104,7 +110,7 @@ namespace AOC
 
             Console.WriteLine("Done");   
         }
-    };
+    }
 
     interface IDay
     {
@@ -116,5 +122,5 @@ namespace AOC
     {
         public string? Value;
         public string? Result;
-    };
+    }
 }

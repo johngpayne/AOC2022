@@ -29,22 +29,24 @@ Sensor at x=20, y=1: closest beacon is at x=15, y=3", Result = "26/56000011")]
                 .Select(m => m.Groups.Values.Skip(1).Select(g => int.Parse(g.Value)).ToArray())
                 .Select(a => (x:a[0], y:a[1], bx:a[2], by:a[3],d:Math.Abs(a[2] - a[0]) + Math.Abs(a[3] - a[1])))
                 .ToArray();
+            IEnumerable<int> RangeFromToInclusive(int from, int to) { return Enumerable.Range(from, 1 + to - from); }
             var answer1 = sensors.Select(s => (s.x,s.y,s.bx,s.by,s.d,l:s.d - Math.Abs(s.y - (test ? 10 : 2000000))))
                 .Where(s => s.l > 0)
                 .Select(s => 
-                    Enumerable.Range(s.x - s.l, 1 + 2 * s.l)
+                    RangeFromToInclusive(s.x - s.l, s.x + s.l)
                     .Where(x => s.by != (test ? 10 : 2000000) || s.bx != x))
                     .Aggregate(new List<int>(), (agg, x) => agg.Union(x).ToList()
                 );
             var answer2 = sensors
+                .Where(s => sensors.Any(s2 => Math.Abs(s2.x - s.x) + Math.Abs(s2.y - s.y) == 2 + s.d + s2.d))
                 .Select(s => (s.x,s.y,d:s.d+1))
                 .Select(s => 
-                    Enumerable.Range(s.y - s.d, 1 + 2 * s.d)
-                    .Where(y => y >= 0 && y <= ((test) ? 20 : 4000000))
+                    RangeFromToInclusive(Math.Max(s.y - s.d, 0), Math.Min(s.y + s.d, (test) ? 20 : 4000000))
                     .Select(y => (x:s.d - Math.Abs(s.y - y), y:y))
                     .Select(p => new (int x, int y)[] { (x:s.x - p.x, y:p.y), (x:s.x + p.x, y:p.y)}.Where(p => p.x >= 0 && p.x <= ((test) ? 20 : 4000000)))
                     .SelectMany(p => p)
-                ).SelectMany(p => p)
+                )
+                .SelectMany(p => p)
                 .First(p => !sensors.Any(s => Math.Abs(s.x - p.x) + Math.Abs(s.y - p.y) <= s.d));
             return string.Format("{0}/{1}", answer1.Count(), 4000000 * (long)answer2.x + answer2.y);
         }
