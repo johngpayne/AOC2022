@@ -60,8 +60,8 @@ namespace AOC
         class VoxelEqual : IEqualityComparer<int[]> 
         {
             public int MaxDim = 4096;
-            public bool Equals(int[] v1, int[] v2) { return v1.SequenceEqual(v2); }
-            public int GetHashCode(int[] v1) { return v1.Aggregate(0, (agg, v) => agg * MaxDim + v); }
+            public bool Equals(int[]? v1, int[]? v2) { return v1!.SequenceEqual(v2!); }
+            public int GetHashCode(int[]? v1) { return v1!.Aggregate(0, (agg, v) => agg * MaxDim + v); }
         };
     }
 }
