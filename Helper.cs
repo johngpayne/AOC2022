@@ -59,7 +59,7 @@ namespace AOC
                             }
                             else if (testOnly)
                             {
-                                dayResults.Add(day, "Test passed");
+                                dayResults.Add(day, $"Test passed: {gotResult}");
                             }
                         }
                         else if (testOnly)
@@ -87,7 +87,7 @@ namespace AOC
                 var day = dayIndex;
                 if ((dayToRun == 0) || (dayToRun == day))
                 {
-                    Console.Write($"DAY {day}:\t");
+                    Console.Write("Day {0} : ", day.ToString().PadLeft(2));
                     if (dayResults[day].StartsWith('!'))
                     {
                         Console.ForegroundColor = ConsoleColor.Red;
@@ -102,7 +102,7 @@ namespace AOC
                 }
             }
 
-            Console.WriteLine("done");   
+            Console.WriteLine("Done");   
         }
     };
 
