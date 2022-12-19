@@ -47,7 +47,7 @@ Blueprint 2:
 
             int GetMaxGeodes(List<int[]> bp, int maxTime, bool simpleScore)
             {
-                var scoreMults = new int[] { 1, bp[1][0], bp[2][1] * bp[1][0], bp[3][2] * bp[2][1] * bp[1][0] };
+                var scoreMults = Enumerable.Range(0, 4).Select(i => Enumerable.Range(0, i).Aggregate(1, (agg, i) => agg * bp[i + 1][i]));
                 var attempts = Enumerable.Repeat((machines: new int[] {1, 0, 0, 0}, inventory: new int[] {0, 0, 0, 0}, refused:0), 1).ToList();
                 for (var min = maxTime - 1; min >= 0; --min)
                 {
