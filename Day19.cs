@@ -57,6 +57,7 @@ Blueprint 2:
 
             int GetMaxGeodes(List<int[]> bp, int maxTime, bool simpleScore)
             {
+                var scoreMults = new int[] { 1, bp[1][0], bp[2][1] * bp[1][0], bp[3][2] * bp[2][1] * bp[1][0] };
                 var attempts = Enumerable.Repeat((machines: new int[] {1, 0, 0, 0}, inventory: new int[] {0, 0, 0, 0}, refused:0), 1).ToList();
                 for (var min = maxTime - 1; min >= 0; --min)
                 {
@@ -74,22 +75,14 @@ Blueprint 2:
                             ));
                         }
                         newAttempts.Add((machines: attempt.machines, inventory: newInventory, refused: attempt.refused | canBuild.Sum(b => 1 << b)));
-                    }
-                    
-                    attempts = newAttempts.OrderByDescending(a => {
-                        var scores = a.machines.Zip(a.inventory, (m, i) => m * min + i).ToArray();
-                        return bp[3][2] * bp[2][1] * bp[1][0] * scores[3] + bp[2][1] * bp[1][0] * scores[2] + bp[1][0] * scores[1] + scores[0];
-                    }).Take(64).ToList();
+                    }     
+                    attempts = newAttempts.OrderByDescending(a => a.machines.Zip(a.inventory, (m, i) => m * min + i).Zip(scoreMults, (s, m) => s * m).Sum()).Take(64).ToList();
                 }
-
-                int maxGeodes = attempts.Max(a => a.inventory[3]);
-                var best = attempts.First(a => a.inventory[3] == maxGeodes);
-
-                return maxGeodes;
+                return attempts.Max(a => a.inventory[3]);
             }
                 
-            int ret1 = blueprints.AsParallel().Select((bp,i) => (i + 1) * GetMaxGeodes(bp, 24, true)).Sum();
-            long ret2 = blueprints.Take(3).AsParallel().Aggregate((long)1, (agg, bp) => agg * GetMaxGeodes(bp, 32, false));
+            int ret1 = blueprints.Select((bp,i) => (i + 1) * GetMaxGeodes(bp, 24, true)).Sum();
+            long ret2 = blueprints.Take(3).Aggregate((long)1, (agg, bp) => agg * GetMaxGeodes(bp, 32, false));
             return string.Format("{0}/{1}", ret1, ret2);
         }
     }
