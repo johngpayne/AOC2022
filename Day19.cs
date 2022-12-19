@@ -28,22 +28,11 @@ Blueprint 2:
                 .Select(m => 
                     m.Groups.Values
                     .Skip(1)
-                    .Select(c =>
-                        c.Value
-                        .Split(" and ")
-                        .Select(p => p.Split(' '))
-                        .Select(p => (machineTypes.IndexOf(p[1]), int.Parse(p[0])))
-                        .ToArray()
-                    )
-                    .Select(c => 
-                            Enumerable.Range(0, 4)
-                            .Select(i => c.Where(p => p.Item1 == i).Sum(p => p.Item2))
-                            .ToArray()
-                    )
+                    .Select(c => c.Value.Split(" and ").Select(p => p.Split(' ')).Select(p => (machineTypes.IndexOf(p[1]), int.Parse(p[0]))).ToArray())
+                    .Select(c => Enumerable.Range(0, 4).Select(i => c.Where(p => p.Item1 == i).Sum(p => p.Item2)).ToArray())
                     .ToList()
                 )
-                .ToArray()
-                ;
+                .ToArray();
 
             int GetMaxGeodes(List<int[]> bp, int maxTime, bool simpleScore)
             {
@@ -58,11 +47,7 @@ Blueprint 2:
                         var canBuild = Enumerable.Range(0, 4).Where(i => ((1 << i) & attempt.refused) == 0).Where(i => bp[i].Select((v, i) => attempt.inventory[i] >= v).All(b => b));
                         foreach (var buildIndex in canBuild)
                         {
-                            newAttempts.Add((
-                                machines: attempt.machines.Select((m, i) => buildIndex == i ? m + 1 : m).ToArray(), 
-                                inventory: newInventory.Zip(bp[buildIndex], (v,c) => v - c).ToArray(),
-                                refused: 0
-                            ));
+                            newAttempts.Add((machines: attempt.machines.Select((m, i) => buildIndex == i ? m + 1 : m).ToArray(), inventory: newInventory.Zip(bp[buildIndex], (v,c) => v - c).ToArray(), refused: 0));
                         }
                         newAttempts.Add((machines: attempt.machines, inventory: newInventory, refused: attempt.refused | canBuild.Sum(b => 1 << b)));
                     }     
