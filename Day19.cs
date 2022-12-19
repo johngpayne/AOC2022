@@ -18,17 +18,7 @@ Blueprint 2:
   Each obsidian robot costs 3 ore and 8 clay.
   Each geode robot costs 3 ore and 12 obsidian.
 ", Result = "33/3472")]
-
-
-/*
-    total[x] = machines[x] * min + inventory[x]
-
-    
-
-*/
-
-
-    class Day19 : IDay
+   class Day19 : IDay
     {
         public string Calc(string input, bool test)
         {
