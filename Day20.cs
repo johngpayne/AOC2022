@@ -23,11 +23,12 @@ namespace AOC
             {
                 var next = nums.Select((v, i) => (i + 1) % nums.Length).ToArray();
                 var prev = nums.Select((v, i) => (i + nums.Length - 1) % nums.Length).ToArray();
+                var rotateIndex = (int index, int offsetForward) => (offsetForward > nums.Length / 2) ? Enumerable.Range(0, nums.Length - offsetForward).Aggregate(index, (agg, i) => prev[agg]) : Enumerable.Range(0, offsetForward).Aggregate(index, (agg, i) => next[agg]);
                 for (int runIndex = 0; runIndex < runs; ++runIndex)
                 {    
                     for (int index = 0; index < nums.Length; ++index)
                     {
-                        var newIndex = Enumerable.Range(0, (int)((key * nums[index]) % (nums.Length - 1) + (nums[index] < 0 ? nums.Length - 1 : 0))).Aggregate(index, (agg, i) => next[agg]);
+                        var newIndex = rotateIndex(index, (int)((key * nums[index]) % (nums.Length - 1) + (nums[index] < 0 ? nums.Length - 1 : 0)));
                         if (index != newIndex)
                         {
                             prev[next[index]] = prev[index];
@@ -39,7 +40,7 @@ namespace AOC
                         }
                     }
                 }
-                return new int[] { 1000, 2000, 3000 }.Select(offset => key * nums[Enumerable.Range(0, offset).Aggregate(zeroIndex, (agg, i) => next[agg])]).Sum();
+                return new int[] { 1000, 2000, 3000 }.Select(offset => key * nums[rotateIndex(zeroIndex, offset % nums.Length)]).Sum();
             }
             return string.Format("{0}/{1}", DoRuns(), DoRuns(811589153, 10));
         }
