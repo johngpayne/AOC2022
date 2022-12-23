@@ -46,55 +46,21 @@ namespace AOC
 
             int Run(Func<int,int,int,(int x, int y, int facingChange)> calcFaceMove)
             {
-                var mapNext = Enumerable.Range(0, 4)
-                    .Select(facing => 
-                        map
-                        .Select((row, y) =>
-                            row
-                            .Select((v, x) => 
-                            {
-                                var oldPos = (x: x, y: y, facing: facing);
-                                if (v != 1)
-                                {
-                                    return oldPos;
-                                }
-
-                                Func<(int x, int y, int facing)> getNewPos = () =>
-                                {
-                                    var newPos = (x: x + offsets[facing].x, y: y + offsets[facing].y, facing: facing);
-                                    if ((x + faceSize) / faceSize != (newPos.x + faceSize) / faceSize || (y + faceSize) / faceSize != (newPos.y + faceSize) / faceSize)
-                                    {
-                                        var faceMove = calcFaceMove(x / faceSize, y / faceSize, facing);
-                                        
-                                        var posOffset = Enumerable.Range(0, faceMove.facingChange).Aggregate(
-                                            (x: (faceSize + newPos.x) % faceSize, y: (faceSize + newPos.y) % faceSize),
-                                            (agg, i) => (faceSize - 1 - agg.y, agg.x));
-                    
-                                        return (
-                                            x: faceSize * faceMove.x + posOffset.x,
-                                            y: faceSize * faceMove.y + posOffset.y,
-                                            facing: (facing + faceMove.facingChange) % 4
-                                        );  
-                                    }
-                                    else
-                                    {
-                                        return newPos;
-                                    }
-                                };
-
-                                var newPos = getNewPos();
-                                return (map[newPos.y][newPos.x] == 1) ? newPos : oldPos;
-                                
-                            })
-                            .ToArray()
-                        )
-                        .ToArray()
-                    )
-                    .ToArray();
-                
-                var move = ((int x, int y, int facing) pos, int steps) => Enumerable.Range(0, steps).Aggregate(pos, (agg, i) => mapNext[agg.facing][agg.y][agg.x]);
+                var step = ((int x, int y, int facing) oldPos) =>
+                {
+                    var newPos = (x: oldPos.x + offsets[oldPos.facing].x, y: oldPos.y + offsets[oldPos.facing].y, facing: oldPos.facing);
+                    if ((oldPos.x + faceSize) / faceSize != (newPos.x + faceSize) / faceSize || (oldPos.y + faceSize) / faceSize != (newPos.y + faceSize) / faceSize)
+                    {
+                        var faceMove = calcFaceMove(oldPos.x / faceSize, oldPos.y / faceSize, oldPos.facing);
+                        var posOffset = Enumerable.Range(0, faceMove.facingChange).Aggregate(
+                            (x: (faceSize + newPos.x) % faceSize, y: (faceSize + newPos.y) % faceSize),
+                            (agg, i) => (faceSize - 1 - agg.y, agg.x));
+                        newPos = (x: faceSize * faceMove.x + posOffset.x, y: faceSize * faceMove.y + posOffset.y, facing: (oldPos.facing + faceMove.facingChange) % 4);  
+                    }
+                    return (map[newPos.y][newPos.x] == 1) ? newPos : oldPos;
+                };
+                var move = ((int x, int y, int facing) pos, int steps) => Enumerable.Range(0, steps).Aggregate(pos, (agg, i) => step(agg));
                 var turn = ((int x, int y, int facing) pos, int turn) => (x: pos.x, y: pos.y, facing: (4 + pos.facing + turn) % 4);
-                
                 var pos = instructions.Aggregate((x: Array.FindIndex(map[0], m => m == 1), y: 0, facing: 0), (agg, instruction) => turn(move(agg, instruction.steps), instruction.turn));       
                 return (pos.y + 1) * 1000 + (pos.x + 1) * 4 + pos.facing;
             }
@@ -163,15 +129,14 @@ namespace AOC
                             .Where(p => p.matches.All(i => i >= 0))
                             .First();
                        
-                        var getFacingChange = () =>
-                        {
-                            if (vertsA[0] == vertsB[1] && vertsA[1] == vertsB[0]) return 2;
-                            else if (vertsA[0] != vertsB[0] && vertsA[1] != vertsB[1]) return 0;
-                            else if (vertsA[0] == vertsB[0]) return 1;
-                            else return 3;
-                        };
+                        var facingChange = new (bool cond, int facingChange)[] {
+                            (vertsA[0] == vertsB[1] && vertsA[1] == vertsB[0], 2),
+                            (vertsA[0] != vertsB[0] && vertsA[1] != vertsB[1], 0),
+                            (vertsA[0] == vertsB[0], 1),
+                            (true, 3)
+                        }.First(p => p.cond).facingChange;
 
-                        return (from: (x: sideA.pos.x, y: sideA.pos.y, facing: facing), to: (x: sideB.pos.x, y: sideB.pos.y, facingChange: getFacingChange()));
+                        return (from: (x: sideA.pos.x, y: sideA.pos.y, facing: facing), to: (x: sideB.pos.x, y: sideB.pos.y, facingChange: facingChange));
                     })
                 )
                 .SelectMany(p => p)
