@@ -32,23 +32,19 @@ namespace AOC
             var instructions = Regex.Matches(lines.Last(), "(\\d+)([LR])?")
                 .Select(m => (steps: int.Parse(m.Groups[1].Value), turn: Array.IndexOf(new string[] { "L", "", "R" }, m.Groups[2].Value) - 1));
             
-            var quadrantSize = (test) ? 4 : 50;
-
             var map = lines
                 .SkipLast(1)
                 .Select(line => 
-                    Enumerable.Range(0, 4 * quadrantSize)
-                    .Select(x => (x >= line.Length) ? ' ' : line[x])
-                    .Select(ch => " .#".IndexOf(ch))
+                    Enumerable.Range(0, lines.SkipLast(1).Max(l => l.Length))
+                    .Select(x => x >= line.Length ? 0 : " .#".IndexOf(line[x]))
                     .ToArray()
                 )
-                .Concat(Enumerable.Repeat(Enumerable.Repeat(0, 4 * quadrantSize).ToArray(), 4 * quadrantSize))
-                .Take(4 * quadrantSize)
                 .ToArray();
 
+            var faceSize = Math.Min(map.Length, map[0].Length) / 3;
             var offsets = new (int x, int y)[] { (1, 0), (0, 1), (-1, 0), (0, -1) };
 
-            int Run(Func<int,int,int,(int x, int y, int facingChange)> f)
+            int Run(Func<int,int,int,(int x, int y, int facingChange)> calcFaceMove)
             {
                 var mapNext = Enumerable.Range(0, 4)
                     .Select(facing => 
@@ -66,18 +62,18 @@ namespace AOC
                                 Func<(int x, int y, int facing)> getNewPos = () =>
                                 {
                                     var newPos = (x: x + offsets[facing].x, y: y + offsets[facing].y, facing: facing);
-                                    var posOffset = (x: (quadrantSize + newPos.x) % quadrantSize, y: (quadrantSize + newPos.y) % quadrantSize);
-                                    if ((posOffset.x == 0 && facing == 0) || (posOffset.y == 0 && facing == 1) || (posOffset.x == quadrantSize - 1 && facing == 2) || (posOffset.y == quadrantSize - 1 && facing == 3))
+                                    if ((x + faceSize) / faceSize != (newPos.x + faceSize) / faceSize || (y + faceSize) / faceSize != (newPos.y + faceSize) / faceSize)
                                     {
-                                        var quadrantMove = f(x, y, facing);
-                                        for (var i = 0; i < quadrantMove.facingChange; i++)
-                                        {
-                                            posOffset = (quadrantSize - 1 - posOffset.y, posOffset.x);
-                                        }
+                                        var faceMove = calcFaceMove(x / faceSize, y / faceSize, facing);
+                                        
+                                        var posOffset = Enumerable.Range(0, faceMove.facingChange).Aggregate(
+                                            (x: (faceSize + newPos.x) % faceSize, y: (faceSize + newPos.y) % faceSize),
+                                            (agg, i) => (faceSize - 1 - agg.y, agg.x));
+                    
                                         return (
-                                            x: quadrantMove.x * quadrantSize + posOffset.x,
-                                            y: quadrantMove.y * quadrantSize + posOffset.y,
-                                            facing: (facing + quadrantMove.facingChange) % 4
+                                            x: faceSize * faceMove.x + posOffset.x,
+                                            y: faceSize * faceMove.y + posOffset.y,
+                                            facing: (facing + faceMove.facingChange) % 4
                                         );  
                                     }
                                     else
@@ -98,59 +94,93 @@ namespace AOC
                 
                 var move = ((int x, int y, int facing) pos, int steps) => Enumerable.Range(0, steps).Aggregate(pos, (agg, i) => mapNext[agg.facing][agg.y][agg.x]);
                 var turn = ((int x, int y, int facing) pos, int turn) => (x: pos.x, y: pos.y, facing: (4 + pos.facing + turn) % 4);
+                
                 var pos = instructions.Aggregate((x: Array.FindIndex(map[0], m => m == 1), y: 0, facing: 0), (agg, instruction) => turn(move(agg, instruction.steps), instruction.turn));       
                 return (pos.y + 1) * 1000 + (pos.x + 1) * 4 + pos.facing;
             }
 
-            var wrapQuadrant = (int x, int y, int facing) =>
+            var wrapPartA = (int sx, int sy, int facing) =>
                 Enumerable.Range(1, 4)
-                    .Select(i => (x: (4 + x / quadrantSize + i * offsets[facing].x) % 4, y: (4 + y / quadrantSize + i * offsets[facing].y) % 4, facingChange: 0))
-                    .First(p => map[p.y * quadrantSize][p.x * quadrantSize] != 0);
-            
-            var makeWrapCube = () =>
-            { 
-                var coords = 
-                    Enumerable.Range(0, 4)
-                    .Select(y => 
-                        Enumerable.Range(0, 4)
-                        .Where(x => map[y * quadrantSize][x * quadrantSize] != 0)
-                        .Select(x => (x:x, y:y))
-                    )
-                    .SelectMany(c => c)
-                    .ToArray();
-                
-                var cubeStrs = (test) ? 
-                    new string[] {
-                        "F2D0B2C1", // <<<<< test cube isn't used much so haven't checked all the directions
-                        "C0E2F3A2",
-                        "D0E1B0A1",
-                        "F1E0C0A0",
-                        "F0B2C1D0",
-                        "A2B3E0D1",
-                    } :
-                    new string[] {
-                        "B0C0D2F1",
-                        "E2C1A0F4",
-                        "B3E0D3A0",
-                        "E0F0A2C1",
-                        "B2F1D0C0",
-                        "E3B4A3D0",
-                   };
+                    .Select(i => (x: (4 + sx + i * offsets[facing].x) % 4, y: (4 + sy + i * offsets[facing].y) % 4, facingChange: 0))
+                    .First(p => { var x = faceSize * p.x; var y = faceSize * p.y; return y < map.Length && x < map[y].Length && map[y][x] != 0; });
 
-                var quadMoves = new Dictionary<(int x, int y, int facing),(int x, int y, int facingChange)>();
-                for (var faceIndex = 0; faceIndex < 6; ++faceIndex)
+            var makeWrapCube = () =>
+            {
+                var sides = 
+                    Enumerable.Range(0, map.Length / faceSize).Select(y => Enumerable.Range(0, map[0].Length / faceSize).Select(x => (x, y))).SelectMany(c => c)
+                    .Where(c => map[faceSize * c.y][faceSize * c.x] != 0)
+                    .Select(pos => (pos, verts: new (int x, int y)[] { (1,0), (1,1), (0,1), (0,0) }.Select(offset => (x: offset.x + pos.x, y: offset.y + pos.y, z: 0)).ToArray()))
+                    .ToArray();
+
+                void Fold((int x, int y) foldDir, int foldPos, int skip)
                 {
-                    for (var facing = 0; facing < 4; ++facing)
+                    var sidesToFold = sides.Where(side => side.pos.x * foldDir.x + side.pos.y * foldDir.y == foldPos && sides.Where(s => s.pos.x == side.pos.x + foldDir.x && s.pos.y == side.pos.y + foldDir.y).Count() == 1);
+                    var vertsToFold = sidesToFold.Select(side => side.verts.Skip(skip)).SelectMany(v => v).Take(2).ToArray();
+                    if (vertsToFold.Length == 2)
                     {
-                        var to = cubeStrs[faceIndex][facing * 2] - 'A';
-                        quadMoves.Add((coords[faceIndex].x, coords[faceIndex].y, facing), (coords[to].x, coords[to].y, cubeStrs[faceIndex][facing * 2 + 1] - '0'));
+                        var axis = (x: vertsToFold[1].x - vertsToFold[0].x, y: vertsToFold[1].y - vertsToFold[0].y, z: vertsToFold[1].z - vertsToFold[0].z);
+                        var rotations = new Dictionary<(int x, int y, int z),int[]> {
+                            { (1, 0, 0), new int[] {1,0,0, 0,0,-1, 0,1,0} },
+                            { (-1, 0, 0), new int[] {1,0,0, 0,0,1, 0,-1,0} },
+                            { (0, 1, 0), new int[] {0,0,1, 0,1,0, -1,0,0} },
+                            { (0, -1, 0), new int[] {0,0,-1, 0,1,0, 1,0,0} },
+                            { (0, 0, 1), new int[] {0,-1,0, 1,0,0, 0,0,1} },
+                            { (0, 0, -1), new int[] {1,1,0, -1,0,0, 0,0,1} },
+                        };
+                        var rot = rotations[axis];
+                        sides = sides.Select(side => 
+                            (foldDir.x * side.pos.x + foldDir.y * side.pos.y <= foldPos) ? 
+                                side : 
+                                (
+                                    pos: side.pos, 
+                                    verts: 
+                                        side.verts
+                                        .Select(v => (x: v.x - vertsToFold[0].x, y: v.y - vertsToFold[0].y, z: v.z - vertsToFold[0].z))
+                                        .Select(v => (x: rot[0] * v.x + rot[1] * v.y + rot[2] * v.z, y: rot[3] * v.x + rot[4] * v.y + rot[5] * v.z, z: rot[6] * v.x + rot[7] * v.y + rot[8] * v.z))
+                                        .Select(v => (x: v.x + vertsToFold[0].x, y: v.y + vertsToFold[0].y, z: v.z + vertsToFold[0].z))
+                                        .ToArray()
+                                )
+                        )
+                        .ToArray();
                     }
                 }
 
-                return (int x, int y, int facing) => quadMoves[(x: x / quadrantSize, y: y / quadrantSize, facing)];
+                for (var foldIndex = 0; foldIndex < 3; foldIndex++)
+                {
+                    Fold(offsets[0], foldIndex, 0);
+                    Fold(offsets[1], foldIndex, 1);
+                }
+
+                var faceMoves = sides.Select(sideA => 
+                    Enumerable.Range(0, 4)
+                    .Select(facing =>
+                    {
+                        var vertsA = new int[] { facing, (facing + 1) % 4 };
+                        (var sideB, var vertsB) = 
+                            sides
+                            .Where(s => s != sideA)
+                            .Select(s => (side: s, matches: vertsA.Select(v => Array.IndexOf(s.verts, sideA.verts[v])).ToArray()))
+                            .Where(p => p.matches.All(i => i >= 0))
+                            .First();
+                       
+                        var getFacingChange = () =>
+                        {
+                            if (vertsA[0] == vertsB[1] && vertsA[1] == vertsB[0]) return 2;
+                            else if (vertsA[0] != vertsB[0] && vertsA[1] != vertsB[1]) return 0;
+                            else if (vertsA[0] == vertsB[0]) return 1;
+                            else return 3;
+                        };
+
+                        return (from: (x: sideA.pos.x, y: sideA.pos.y, facing: facing), to: (x: sideB.pos.x, y: sideB.pos.y, facingChange: getFacingChange()));
+                    })
+                )
+                .SelectMany(p => p)
+                .ToDictionary(p => p.from, p => p.to);
+
+                return (int x, int y, int facing) => faceMoves[(x, y, facing)]; 
             };
 
-            return string.Format("{0}/{1}", Run(wrapQuadrant), Run(makeWrapCube()));
+            return string.Format("{0}/{1}", Run(wrapPartA), Run(makeWrapCube()));
          }
     }
 }
