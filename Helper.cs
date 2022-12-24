@@ -21,9 +21,10 @@ namespace AOC
             return await client.GetStringAsync(uri);
         }
 
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
-            var dayToRun = args.Where(arg => arg.StartsWith("--day=")).Select(str => int.Parse(str.Substring("--day=".Length))).FirstOrDefault(0);
+            var totalWatch = System.Diagnostics.Stopwatch.StartNew();
+                                            var dayToRun = args.Where(arg => arg.StartsWith("--day=")).Select(str => int.Parse(str.Substring("--day=".Length))).FirstOrDefault(0);
             if (dayToRun == 0 && !args.Contains("--alldays")) 
             {
                 dayToRun = DateTime.Today.Day;
@@ -32,6 +33,9 @@ namespace AOC
             
             var session = args.Where(arg => arg.StartsWith("--session=")).Select(str => str.Substring("--session=".Length)).FirstOrDefault("");
             var testOnly = session == "" || args.Contains("--testonly");
+            var time = args.Contains("--time");
+            var singleThread = args.Contains("--singlethread");
+            var runTests = !args.Contains("--notest");
 
             var dayResults = new Dictionary<int, string>();
             var tasks = new List<Task>();
@@ -46,7 +50,7 @@ namespace AOC
                         var dayCalc = Activator.CreateInstance(dayType) as IDay;
                         var attrs = dayType.GetCustomAttributes(typeof(TestDataAttribute), false);
                         var testPassed = true;
-                        if (attrs.Length > 0)
+                        if (attrs.Length > 0 && runTests)
                         {
                             var attr = (attrs[0] as TestDataAttribute);
                             var testValue = attr!.Value;
@@ -64,19 +68,27 @@ namespace AOC
                         }
                         else if (testOnly)
                         {
-                            dayResults.Add(day, "!Test not defined");
+                            dayResults.Add(day, runTests ? "!Test not defined" : "!Not running tests");
                         }
 
                         if (!testOnly && testPassed)
                         {
                             Task<string> getInput = Helper.GetInputForDay(day, session);
-                            tasks.Add(getInput.ContinueWith(task => 
+                            var calcResult = getInput.ContinueWith(task => 
                             {
                                 var watch = System.Diagnostics.Stopwatch.StartNew();
                                 string result = dayCalc!.Calc(task.Result, false);
                                 watch.Stop();
-                                dayResults.Add(day, string.Format("Test passed, actual result: {0} (took {1}ms)", result, watch.ElapsedMilliseconds));
-                            }));
+                                dayResults.Add(day, string.Format(runTests ? "Test passed, actual result: {0}{1}" : "Got result: {0}{1}", result, (time && (singleThread || dayToRun != 0)) ? string.Format(" (took {0}ms)", watch.ElapsedMilliseconds) : ""));
+                            });
+                            if (singleThread)
+                            {
+                                await calcResult;
+                            }
+                            else
+                            {
+                                tasks.Add(calcResult);
+                            }
                         }
                     }
                     else
@@ -86,7 +98,7 @@ namespace AOC
                 }
             }
 
-            Task.WaitAll(tasks.ToArray());
+            if (!singleThread) Task.WaitAll(tasks.ToArray());
 
             for (int dayIndex = 1; dayIndex <= 25; ++dayIndex)
             {
@@ -108,7 +120,8 @@ namespace AOC
                 }
             }
 
-            Console.WriteLine("Done");   
+            totalWatch.Stop();
+            Console.WriteLine("Done{0}", time ? string.Format(" (took {0}ms)", totalWatch.ElapsedMilliseconds) : "");   
         }
     }
 

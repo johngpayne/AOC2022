@@ -30,7 +30,7 @@ Valve JJ has flow rate=21; tunnel leads to valve II", Result = "1651/1707")]
             
             int Run(int maxMins, int numPos)
             {
-                var attempts = Enumerable.Repeat((pos:Enumerable.Repeat(tunnelNames.FindIndex(m => m.n == "AA"), numPos).ToArray(), open: tunnels.Select((t, i) => (t.f == 0) ? (long)1 << i : (long)0).Sum(), vented: 0, venting: 0, visited: Enumerable.Repeat((long)0, numPos).ToArray()), 1).ToList();
+                var attempts = Enumerable.Repeat((pos:Enumerable.Repeat(tunnelNames.FindIndex(m => m.n == "AA"), numPos).ToArray(), open: tunnels.Select((t, i) => (t.f == 0) ? (long)1 << i : (long)0).Sum(), vented: 0, venting: 0, visited: Enumerable.Repeat((long)0, numPos).ToArray()), 1).ToArray();
                 for (var min = maxMins - 1; min > 0; --min)
                 {
                     for (var posIndex = 0; posIndex < numPos; ++posIndex)
@@ -61,10 +61,10 @@ Valve JJ has flow rate=21; tunnel leads to valve II", Result = "1651/1707")]
                             }
                             return newAttempts;
                         };
-                        attempts = attempts.AsParallel().Select(attempt => expandAttempt(attempt)).SelectMany(a => a).ToList();
+                        attempts = attempts.AsParallel().Select(attempt => expandAttempt(attempt)).SelectMany(a => a).ToArray();
                     }
-                    var limitAttempts = (IEnumerable<(int[], long, int vented, int, long[])> ar, int n) => (ar.Count() > n) ? ar.OrderByDescending(a => a.vented).Take(n) : ar;
-                    attempts = limitAttempts(attempts.Select(m => (m.pos, m.open, m.vented + m.venting, m.venting, m.visited)), min * 1000).ToList();
+                    var limitAttempts = (IEnumerable<(int[] pos, long, int vented, int venting, long[] visited)> ar, int n) => (ar.Count() > n) ? ar.OrderByDescending(a => a.vented).Take(n) : ar;
+                    attempts = limitAttempts(attempts.Select(m => (m.pos, m.open, m.vented + m.venting, m.venting, m.visited)), 1000 * min).ToArray();
                 }
                 return attempts.Max(a => a.vented);
             }
