@@ -24,7 +24,7 @@ namespace AOC
         static async Task Main(string[] args)
         {
             var totalWatch = System.Diagnostics.Stopwatch.StartNew();
-                                            var dayToRun = args.Where(arg => arg.StartsWith("--day=")).Select(str => int.Parse(str.Substring("--day=".Length))).FirstOrDefault(0);
+            var dayToRun = args.Where(arg => arg.StartsWith("--day=")).Select(str => int.Parse(str.Substring("--day=".Length))).FirstOrDefault(0);
             if (dayToRun == 0 && !args.Contains("--alldays")) 
             {
                 dayToRun = DateTime.Today.Day;
