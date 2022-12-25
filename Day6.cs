@@ -10,7 +10,11 @@ namespace AOC
     {
         public string Calc(string input, bool test)
         {
-            return String.Join('/', new int[] {4, 14}.Select(len => (len + Enumerable.Range(0, input.Length - len).First(index => input.Substring(index, len).Distinct().Count() == len)).ToString()));
+            return String.Join('/', 
+                new int[] {4, 14}
+                .Select(len => len + Enumerable.Range(0, input.Length - len).First(index => input.Substring(index, len).Distinct().Count() == len))
+                .Select(res => res.ToString())
+            );
         }
     }
 }

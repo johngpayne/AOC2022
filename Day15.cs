@@ -24,8 +24,8 @@ Sensor at x=20, y=1: closest beacon is at x=15, y=3", Result = "26/56000011")]
     {
         public string Calc(string input, bool test)
         {
-            var sensors = new Regex("Sensor at x=(-?\\d+), y=(-?\\d+): closest beacon is at x=(-?\\d+), y=(-?\\d+)")
-                .Matches(input)
+            var sensors = 
+                Regex.Matches(input, "Sensor at x=(-?\\d+), y=(-?\\d+): closest beacon is at x=(-?\\d+), y=(-?\\d+)")
                 .Select(m => m.Groups.Values.Skip(1).Select(g => int.Parse(g.Value)).ToArray())
                 .Select(a => (x:a[0], y:a[1], bx:a[2], by:a[3],d:Math.Abs(a[2] - a[0]) + Math.Abs(a[3] - a[1])))
                 .ToArray();

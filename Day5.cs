@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace AOC
 {
@@ -18,24 +19,44 @@ move 1 from 1 to 2", Result = "CMZ/MCD")]
     {
         public string Calc(string input, bool test)
         {
-            var lines = input.Split('\n');
-            var lineNotEmpty = (string line) => line.Trim() != "";
-            var linesInit = lines.TakeWhile(lineNotEmpty).SkipLast(1);
-            var linesCommands = lines.SkipWhile(lineNotEmpty).Where(lineNotEmpty);
-            var numStacks = linesInit.Max(line => (line.Length + 1) / 4);
-            return string.Join('/', new Func<IEnumerable<char>,IEnumerable<char>>[] {a => a.Reverse(), a => a}.Select(
-                f => 
-                {
-                    var stacks = Enumerable.Range(0, numStacks).Select(stackIndex => linesInit.Select(line => line.PadRight(numStacks * 4)[4 * stackIndex + 1]).SkipWhile(ch => ch == ' ').Reverse().ToList()).ToArray();
-                    foreach (var command in linesCommands)
-                    {
-                        var vals = command.Split(' ').Where((x, i) => (i & 1) == 1).Select((x, i) => int.Parse(x) - ((i != 0) ? 1 : 0)).ToArray();
-                        stacks[vals[2]].AddRange(f(stacks[vals[1]].TakeLast(vals[0])));
-                        stacks[vals[1]].RemoveRange(stacks[vals[1]].Count() - vals[0], vals[0]);
-                    }
-                    return new String(stacks.Select(stack => stack.Last()).ToArray());
-                }
-            ));
+            var lines = 
+                input
+                .Split('\n')
+                .Select(line => line.TrimEnd())
+                .Where(line => line != "")
+                .ToLookup(line => line.TrimStart()[0] == '[');
+            
+            var numStacks = lines[true].Max(line => (line.Length + 1) / 4);
+            var startStacks = Enumerable.Range(0, numStacks)
+                .Select(stackIndex => 
+                    lines[true].Select(line => 
+                        line
+                        .PadRight(numStacks * 4)[4 * stackIndex + 1])
+                        .SkipWhile(ch => ch == ' ')
+                        .Reverse()
+                        .ToArray()
+                    )
+                .ToArray();
+                
+            return string.Join('/', 
+                Enumerable.Range(0, 2).Select(puzzle => 
+                    new String( 
+                        lines[false]
+                        .Skip(1)
+                        .Select(command => Regex.Match(command, "move (\\d+) from (\\d+) to (\\d+)").Groups.Values.Skip(1).Select((v,i) => int.Parse(v.Value) - (i != 0 ? 1 : 0)).ToArray())
+                        .Aggregate(startStacks, (stacks, vals) =>
+                            stacks.Select((stack, i) =>
+                                (i == vals[2]) ? stack.Concat(((Func<IEnumerable<char>,IEnumerable<char>>)((s) => puzzle == 0 ? s.Reverse() : s))(stacks[vals[1]].TakeLast(vals[0]))).ToArray() :
+                                (i == vals[1]) ? stack.SkipLast(vals[0]).ToArray() :
+                                stack
+                            )
+                            .ToArray()
+                        )
+                        .Select(stack => stack.Last())
+                        .ToArray()
+                    )
+                )
+            );
         }
     }
 }

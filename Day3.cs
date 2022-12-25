@@ -15,10 +15,28 @@ CrZsJsPPZsGzwwsLwLmpwMDw", Result = "157/70")]
     {
         public string Calc(string input, bool test)
         {
-            var lines = input.Split('\n').Where(line => line.Trim() != "");
-            var scoreChar = (char c) => { if (Char.IsAsciiLetterLower(c)) return (1 + (c - 'a')); else if (Char.IsAsciiLetterUpper(c)) return (27 + (c - 'A')); else return 0; };
-            int scoreParts<T>(IEnumerable<T> parts) where T : IEnumerable<char> { return parts.ElementAt(0).Where(ch => parts.Skip(1).All(part => part.Contains(ch))).Distinct().Sum(ch => scoreChar(ch)); }
-            return String.Format("{0}/{1}", lines.Select(line => scoreParts(line.Trim().Chunk(line.Length / 2))).Sum(), lines.Chunk(3).Sum(chunk => scoreParts(chunk)));
+            var lines = 
+                input
+                .Split('\n')
+                .Select(line => line.Trim())
+                .Where(line => line != "");
+            var scoreParts = (IEnumerable<IEnumerable<char>> parts) =>
+                parts
+                .ElementAt(0)
+                .Where(ch => 
+                    parts
+                    .Skip(1)
+                    .All(part => 
+                        part.Contains(ch)
+                    )
+                )
+                .Distinct()
+                .Sum(c => Char.IsAsciiLetterLower(c) ? (1 + (c - 'a')) : (27 + (c - 'A'))); 
+            return String.Format(
+                "{0}/{1}", 
+                lines.Select(line => scoreParts(line.Chunk(line.Length / 2))).Sum(), 
+                lines.Chunk(3).Sum(chunk => scoreParts(chunk))
+            );
         }
     }
 }

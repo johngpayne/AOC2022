@@ -23,7 +23,25 @@ namespace AOC
     {
         public string Calc(String input, bool test)
         {
-            return String.Join('/', new int[]{1, 3}.Select(n => input.Split('\n').Aggregate(new List<Tuple<int,int>>{new Tuple<int,int>(0,0)}, (acc,line) => acc.Concat(new Tuple<int,int>[]{(line.Trim() == "") ? new Tuple<int,int>(acc.Last().Item1 + 1, 0) : new Tuple<int,int>(acc.Last().Item1, acc.Last().Item2 + int.Parse(line))}).ToList()).GroupBy(t => t.Item1).Select(g => g.Last().Item2).OrderByDescending(i => i).Take(n).Sum().ToString()));
+            return 
+                String.Join(
+                    '/', 
+                    new int[]{1, 3}.Select(n => 
+                        input
+                        .Split('\n')
+                        .Aggregate(new List<(int, int)>{(0,0)}, (agg,line) => 
+                            agg
+                            .Concat(Enumerable.Repeat(line.Trim() == "" ? (agg.Last().Item1 + 1, 0) : (agg.Last().Item1, agg.Last().Item2 + int.Parse(line)), 1))
+                            .ToList()
+                        )
+                        .GroupBy(t => t.Item1)
+                        .Select(g => g.Last().Item2)
+                        .OrderByDescending(i => i)
+                        .Take(n)
+                        .Sum()
+                        .ToString()
+                    )
+                );
         }
     }
 }
