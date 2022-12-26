@@ -36,6 +36,7 @@ namespace AOC
             var time = args.Contains("--time");
             var singleThread = args.Contains("--singlethread");
             var runTests = !args.Contains("--notest");
+            var redact = args.Contains("--redact");
 
             var dayResults = new Dictionary<int, string>();
             var tasks = new List<Task>();
@@ -79,7 +80,7 @@ namespace AOC
                                 var watch = System.Diagnostics.Stopwatch.StartNew();
                                 string result = dayCalc!.Calc(task.Result, false);
                                 watch.Stop();
-                                dayResults.Add(day, string.Format(runTests ? "Test passed, actual result: {0}{1}" : "Got result: {0}{1}", result, (time && (singleThread || dayToRun != 0)) ? string.Format(" (took {0}ms)", watch.ElapsedMilliseconds) : ""));
+                                dayResults.Add(day, string.Format(runTests ? "Test passed, actual result: {0}{1}" : "Got result: {0}{1}", (redact) ? new string('*', result.Length) : result, (time && (singleThread || dayToRun != 0)) ? string.Format(" (took {0}ms)", watch.ElapsedMilliseconds) : ""));
                             });
                             if (singleThread)
                             {
