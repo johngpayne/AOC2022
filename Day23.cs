@@ -28,16 +28,31 @@ namespace AOC
             {
                 var elfMoves =
                     elves
-                    .Select(elf => (elf, offsets.Aggregate(0, (agg, p) => agg * 2 + (elves.Contains((p.x + elf.x, p.y + elf.y)) ? 1 : 0))))
-                    .Select(p => p.Item2 == 0 ? (elf: p.Item1, xo: 0, yo: 0, stopped: true) : dirs.Where(dir => (p.Item2 & dir.bits) == 0).Select(dir => (elf: p.elf, xo: dir.x, yo: dir.y, stopped: false)).FirstOrDefault((elf: p.elf, xo: 0, yo: 0, stopped: false)))
-                    .Select(p => (stopped: p.stopped, originalPos: p.elf, newPos: (x: p.elf.x + p.xo, y: p.elf.y + p.yo)))
-                    .GroupBy(p => p.newPos)
-                    .ToLookup(g => g.Count())
-                    .Select(g => g.Select(c => c.Select(p => (stopped: p.stopped, pos: g.Key == 1 ? p.newPos : p.originalPos))).SelectMany(e => e))
-                    .SelectMany(e => e)
+                    .Select(elf => (originalPos: elf, area: offsets.Aggregate(0, (agg, p) => agg * 2 + (elves.Contains((p.x + elf.x, p.y + elf.y)) ? 1 : 0))))
+                    .Select(elf => (originalPos: elf.originalPos, dir: (elf.area == 0) ? (x: 0, y: 0, bits: 0) : dirs.Where(dir => (elf.area & dir.bits) == 0).FirstOrDefault((x: 0, y: 0, bits: 0)), stopped: elf.area == 0))
+                    .Select(elf => (originalPos: elf.originalPos, newPos: elf.stopped ? elf.originalPos : (x: elf.originalPos.x + elf.dir.x, y: elf.originalPos.y + elf.dir.y), stopped: elf.stopped))
                     .ToArray();
-                elves = elfMoves.Select(e => e.pos).ToHashSet();
+
+                elves = 
+                    elfMoves
+                    .Where(elf => elf.newPos != elf.originalPos)
+                    .GroupBy(elf => elf.newPos)
+                    .ToLookup(group => group.Count())
+                    .Select(group => 
+                        group
+                        .SelectMany(elf => elf)
+                        .Select(elf => group.Key == 1 ? elf.newPos : elf.originalPos)
+                    )
+                    .SelectMany(elf => elf)
+                    .Concat(
+                        elfMoves
+                        .Where(elf => elf.newPos == elf.originalPos)
+                        .Select(elf => elf.originalPos)
+                    )
+                    .ToHashSet();
+
                 dirs = dirs.Skip(1).Concat(dirs).Take(4).ToArray();
+                
                 ret2++;
                 if (ret2 == 10)
                 {
