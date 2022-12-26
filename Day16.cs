@@ -20,55 +20,107 @@ Valve JJ has flow rate=21; tunnel leads to valve II", Result = "1651/1707")]
     {
         public string Calc(string input, bool test)
         {
-            var tunnelNames = Regex.Matches(input, "Valve ([A-Z]+) has flow rate=(-?\\d+); tunnels? leads? to valves? ([^\n\r]+)")
-                .Select(m => m.Groups.Values.Skip(1).Select(v => v.Value).ToArray())
-                .Select(m => (n:m[0], f:int.Parse(m[1]), tn:m[2].Split(", ")))
-                .ToList();
-            var tunnels = tunnelNames
-                .Select(m => (f:m.f, t:m.tn.Select(n => tunnelNames.FindIndex(m => m.n == n))))
-                .ToList();
+            var tunnelNames = 
+                Regex.Matches(input, "Valve ([A-Z]+) has flow rate=(-?\\d+); tunnels? leads? to valves? ([^\n\r]+)")
+                .Select(match => match.Groups.Values.Skip(1).Select(value => value.Value).ToArray())
+                .Select(values => (name: values[0], vents: int.Parse(values[1]), toNames: values[2].Split(", ")))
+                .ToArray();
+            var tunnels = 
+                tunnelNames
+                .Select((tunnel, tunnelIndex) => (vents: tunnel.vents, toIndices: tunnel.toNames.Select(name => Array.FindIndex(tunnelNames, findTunnel => findTunnel.name == name)).ToArray()))
+                .ToArray();
+            var valuableTunnels = 
+                Enumerable.Range(0, tunnels.Length)
+                .Where(index => tunnels[index].vents > 0)
+                .ToArray();
             
-            int Run(int maxMins, int numPos)
+            var startTunnel = 
+                Array.FindIndex(tunnelNames, tunnel => tunnel.name == "AA");
+
+            var tunnelDists = 
+                Enumerable.Range(0, tunnels.Length)
+                .Select(i1 => 
+                    Enumerable.Range(0, tunnels.Length)
+                    .Select(i2 =>
+                        i1 == i2 ? 0 : tunnels[i1].toIndices.Contains(i2) ? 1 : int.MaxValue
+                    )
+                    .ToArray()
+                )
+                .ToArray();
+            for (var i1 = 0; i1 < tunnels.Length; ++i1)
             {
-                var attempts = Enumerable.Repeat((pos:Enumerable.Repeat(tunnelNames.FindIndex(m => m.n == "AA"), numPos).ToArray(), open: tunnels.Select((t, i) => (t.f == 0) ? (long)1 << i : (long)0).Sum(), vented: 0, venting: 0, visited: Enumerable.Repeat((long)0, numPos).ToArray()), 1).ToArray();
-                for (var min = maxMins - 1; min > 0; --min)
+                for (var i2 = 0; i2 < tunnels.Length; ++i2)
                 {
-                    for (var posIndex = 0; posIndex < numPos; ++posIndex)
+                    for (var i3 = 0; i3 < tunnels.Length; ++i3)
                     {
-                        T[] ReplaceAtIndex<T>(T[] a, Func<T,T> f) { return a.Select((v, i) => i == posIndex ? f(v) : v).ToArray(); }
-                        var expandAttempt = ((int[] pos, long open, int vented, int venting, long[] visited) attempt) =>
+                        if (tunnelDists[i2][i1] != int.MaxValue && tunnelDists[i1][i3] != int.MaxValue && tunnelDists[i2][i3] > tunnelDists[i2][i1] + tunnelDists[i1][i3])
                         {
-                            var newAttempts = new List<(int[] pos, long open, int vented, int venting, long[] visited)>();
-                            if (attempt.open == ((long)1 << (tunnels.Count())) - 1)
-                            {
-                                newAttempts.Add(attempt);
-                            }
-                            else
-                            {
-                                var bit = (long)1 << attempt.pos[posIndex];
-                                if ((attempt.open & bit) == 0)
-                                {
-                                    newAttempts.Add((attempt.pos, attempt.open | bit, attempt.vented, attempt.venting + tunnels[attempt.pos[posIndex]].f, ReplaceAtIndex(attempt.visited, v => 0)));
-                                }
-                                foreach(int to in tunnels[attempt.pos[posIndex]].t)
-                                {
-                                    var tBit = (long)1 << to;
-                                    if ((attempt.visited[posIndex] & tBit) == 0)
-                                    {
-                                        newAttempts.Add((ReplaceAtIndex(attempt.pos, p => to), attempt.open, attempt.vented, attempt.venting, ReplaceAtIndex(attempt.visited, v => v | tBit)));
-                                    }
-                                }
-                            }
-                            return newAttempts;
-                        };
-                        attempts = attempts.AsParallel().Select(attempt => expandAttempt(attempt)).SelectMany(a => a).ToArray();
+                            tunnelDists[i2][i3] = tunnelDists[i2][i1] + tunnelDists[i1][i3];
+                        }
                     }
-                    var limitAttempts = (IEnumerable<(int[] pos, long, int vented, int venting, long[] visited)> ar, int n) => (ar.Count() > n) ? ar.OrderByDescending(a => a.vented).Take(n) : ar;
-                    attempts = limitAttempts(attempts.Select(m => (m.pos, m.open, m.vented + m.venting, m.venting, m.visited)), 1000 * min).ToArray();
                 }
-                return attempts.Max(a => a.vented);
             }
-            return string.Format("{0}/{1}", Run(30, 1), Run(26, 2));
-       }
+            
+            var run = (int time) =>
+            {
+                var attempts = Enumerable.Repeat((time: time, pos: startTunnel, open: (long)0, vented: 0), 1).ToArray();            
+                while (true)
+                {
+                    var newAttempts = new List<(int time, int pos, long open, int vented)>();
+                    foreach (var attempt in attempts)
+                    {
+                        var targetTunnels = 
+                            valuableTunnels
+                            .Where(tunnelIndex => (attempt.open & ((long)1 << tunnelIndex)) == 0);
+
+                        foreach(var tunnelIndex in targetTunnels)
+                        {
+                            var timeToOpenTunnel = tunnelDists[attempt.pos][tunnelIndex] + 1;
+                            if (timeToOpenTunnel < attempt.time)
+                            {
+                                newAttempts.Add(
+                                    (
+                                        attempt.time - timeToOpenTunnel, 
+                                        tunnelIndex, 
+                                        attempt.open | ((long)1 << tunnelIndex), 
+                                        attempt.vented + tunnels[tunnelIndex].vents * (attempt.time - timeToOpenTunnel)
+                                    )
+                                );
+                            }
+                        }
+                        newAttempts.Add((0, attempt.pos, attempt.open, attempt.vented));
+                    }
+                    if (attempts.Length == newAttempts.Count)
+                    {
+                        break;
+                    }
+                    attempts = 
+                        newAttempts
+                        .ToLookup(attempt => attempt.open)
+                        .Select(attemptGroup => attemptGroup.OrderByDescending(attempt => attempt.vented).Take(2))
+                        .SelectMany(attempt => attempt)
+                        .OrderByDescending(attempt => attempt.vented)
+                        .ToArray();
+                }
+                return attempts;
+            };
+
+            var part1 = run(30).First().vented;
+
+            var part2Run = run(26);
+            var part2 = 
+                part2Run
+                .Select(attempt =>
+                    part2Run
+                    .Where(elephantAttempt => (elephantAttempt.open & attempt.open) == 0)
+                    .Select(elephantAttempt => attempt.vented + elephantAttempt.vented)
+                    .OrderByDescending(vented => vented)
+                    .FirstOrDefault(attempt.vented)
+                )
+                .OrderByDescending(vented => vented)
+                .First();
+
+            return string.Format("{0}/{1}", part1, part2); 
+      }
     }
 }
