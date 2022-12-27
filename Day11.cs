@@ -47,20 +47,20 @@ Monkey 3:
                     PassTo = setup.Skip(4).Select(s => s.Last() - '0').ToArray()
                 };
             }).ToArray();
-            var gcd = monkeys.Aggregate(1, (agg, m) => agg * m.Divisible);
-            return string.Join('/', new (int,int)[] { (20, 3), (10000, 1)}.Select(
+            var divisiblesProduct = monkeys.Aggregate(1, (agg, m) => agg * m.Divisible);
+            return string.Join('/', new (int rounds,int count)[] { (20, 3), (10000, 1)}.Select(
                 tryPair =>
                 {
                     var inspections = new int[monkeys.Length];
                     var items = monkeys.Select(monkey => monkey.StartItems!.ToList()).ToArray();
-                    for (var round = 0; round < tryPair.Item1; round++)
+                    for (var round = 0; round < tryPair.rounds; round++)
                     {
                         foreach (var monkey in monkeys)
                         {
                             foreach (var worryStart in items[monkey.Index])
                             {
                                 inspections[monkey.Index]++;
-                                int worry = (int)(((monkey.Quadratic.Item1 * worryStart * worryStart + monkey.Quadratic.Item2 * (long)worryStart + monkey.Quadratic.Item3) / tryPair.Item2) % gcd);
+                                int worry = (int)(((monkey.Quadratic.x2 * worryStart * worryStart + monkey.Quadratic.x * (long)worryStart + monkey.Quadratic.c) / tryPair.count) % divisiblesProduct);
                                 items[monkey.PassTo![(worry % monkey.Divisible == 0) ? 0 : 1]].Add(worry);
                             }
                             items[monkey.Index].Clear();
@@ -76,7 +76,7 @@ Monkey 3:
         {
             public int Index;
             public int[]? StartItems;
-            public (long,long,long) Quadratic;
+            public (long x2,long x,long c) Quadratic;
             public int Divisible;
             public int[]? PassTo;
         }

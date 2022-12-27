@@ -29,14 +29,14 @@ namespace AOC
                     new int[]{1, 3}.Select(n => 
                         input
                         .Split('\n')
-                        .Aggregate(new List<(int, int)>{(0,0)}, (agg,line) => 
+                        .Aggregate(new List<(int group, int total)>{(0,0)}, (agg,line) => 
                             agg
-                            .Concat(Enumerable.Repeat(line.Trim() == "" ? (agg.Last().Item1 + 1, 0) : (agg.Last().Item1, agg.Last().Item2 + int.Parse(line)), 1))
+                            .Concat(Enumerable.Repeat(line.Trim() == "" ? (agg.Last().group + 1, 0) : (agg.Last().group, agg.Last().total + int.Parse(line)), 1))
                             .ToList()
                         )
-                        .GroupBy(t => t.Item1)
-                        .Select(g => g.Last().Item2)
-                        .OrderByDescending(i => i)
+                        .GroupBy(t => t.group)
+                        .Select(g => g.Last().total)
+                        .OrderByDescending(t => t)
                         .Take(n)
                         .Sum()
                         .ToString()

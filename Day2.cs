@@ -21,13 +21,13 @@ C Z", Result = "15/12")]
                             .Select(otherPick => 
                                 Enumerable.Range(0, 3).Select(offset => 
                                     (
-                                        "ABC"[otherPick] + " " + "XYZ"[(rule == 1) ? (offset + 1) % 3 : (otherPick + offset) % 3], 
-                                        1 + ((otherPick + offset) % 3) + 3 * ((offset + 1) % 3)
+                                        key: "ABC"[otherPick] + " " + "XYZ"[(rule == 1) ? (offset + 1) % 3 : (otherPick + offset) % 3], 
+                                        value: 1 + ((otherPick + offset) % 3) + 3 * ((offset + 1) % 3)
                                     )
                                 )
                             )
                             .SelectMany(p => p)
-                            .ToDictionary(p => p.Item1, p => p.Item2);
+                            .ToDictionary(p => p.key, p => p.value);
                         return 
                             input
                             .Split('\n')

@@ -74,7 +74,7 @@ namespace AOC
             var extras = new List<List<object>>{ parseStr("[[2]]"), parseStr("[[6]]")};
             var sortedLines = pairs.SelectMany(s => s).Concat(extras).ToList();
             sortedLines.Sort((p0, p1) => Compare(p0, p1));
-            var ret2 = sortedLines.Select((line, index) => (line, index + 1)).Where(pair => extras.Any(extra => Compare(extra, pair.Item1) == 0)).Aggregate(1, (agg, pair) => agg * pair.Item2).ToString();
+            var ret2 = sortedLines.Select((line, index) => (line: line, index: index + 1)).Where(pair => extras.Any(extra => Compare(extra, pair.line) == 0)).Aggregate(1, (agg, pair) => agg * pair.index).ToString();
             
             return string.Format("{0}/{1}", ret1, ret2);
         }

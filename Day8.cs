@@ -14,37 +14,45 @@ namespace AOC
     {
         public string Calc(string input, bool test)
         {
-            var heights = input.Split("\n").Select(line => line.Trim()).Where(line => line != "").Select(line => line.Select(ch => ch - '0').ToArray()).ToArray();
-            var results = Enumerable.Range(0, heights.Length).Select(
-                y =>
-                    Enumerable.Range(0, heights[y].Length).Select(
-                        x =>
-                            new (int, int)[] {(-1, 0), (1, 0), (0, -1), (0, 1)}.Select(
-                                offset =>
+            var heights = 
+                input
+                .Split("\n")
+                .Select(line => line.Trim())
+                .Where(line => line != "")
+                .Select(line => 
+                    line.Select(ch => ch - '0').ToArray()
+                )   
+                .ToArray();
+
+            var results = 
+                Enumerable.Range(0, heights.Length).Select(y =>
+                    Enumerable.Range(0, heights[y].Length).Select(x =>
+                        new (int x, int y)[] {(-1, 0), (1, 0), (0, -1), (0, 1)}
+                        .Select(offset =>
+                        {
+                            var coord = (x, y);
+                            var seenMax = 0;
+                            var seen = 0;
+                            while (true)
+                            {
+                                if (coord.y < 0 || coord.y >= heights.Length || coord.x < 0 || coord.x >= heights[coord.y].Length) 
                                 {
-                                    var coord = (x, y);
-                                    var seenMax = 0;
-                                    var seen = 0;
-                                    while (true)
-                                    {
-                                        if (coord.Item2 < 0 || coord.Item2 >= heights.Length || coord.Item1 < 0 || coord.Item1 >= heights[coord.Item2].Length) 
-                                        {
-                                            return (true, seen - 1);
-                                        }
-                                        int height = heights[coord.Item2][coord.Item1];
-                                        if (seen > 0 && height >= seenMax)
-                                        {
-                                            return (false, seen);
-                                        }
-                                        seen++;
-                                        seenMax = int.Max(seenMax, height);
-                                        coord = (coord.Item1 + offset.Item1, coord.Item2 + offset.Item2);
-                                    }
+                                    return (canSee: true, dist: seen - 1);
                                 }
-                            ).Aggregate((false, 1), (agg, r) => (agg.Item1 | r.Item1, agg.Item2 * r.Item2))
+                                int height = heights[coord.y][coord.x];
+                                if (seen > 0 && height >= seenMax)
+                                {
+                                    return (canSee: false, dist: seen);
+                                }
+                                seen++;
+                                seenMax = int.Max(seenMax, height);
+                                coord = (coord.x + offset.x, coord.y + offset.y);
+                            }
+                        })
+                        .Aggregate((canSee: false, dist: 1), (agg, r) => (agg.canSee | r.canSee, agg.dist * r.dist))
                     )
             );
-            return String.Format("{0}/{1}", results.Select(row => row.Where(r => r.Item1).Count()).Sum(), results.Select(row => row.Max(r => r.Item2)).Max());
+            return String.Format("{0}/{1}", results.Select(row => row.Where(r => r.canSee).Count()).Sum(), results.Select(row => row.Max(r => r.dist)).Max());
        }
     }
 }

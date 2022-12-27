@@ -28,8 +28,8 @@ Blueprint 2:
                 .Select(m => 
                     m.Groups.Values
                     .Skip(1)
-                    .Select(c => c.Value.Split(" and ").Select(p => p.Split(' ')).Select(p => (machineTypes.IndexOf(p[1]), int.Parse(p[0]))).ToArray())
-                    .Select(c => Enumerable.Range(0, 4).Select(i => c.Where(p => p.Item1 == i).Sum(p => p.Item2)).ToArray())
+                    .Select(c => c.Value.Split(" and ").Select(p => p.Split(' ')).Select(p => (index: machineTypes.IndexOf(p[1]), amount: int.Parse(p[0]))).ToArray())
+                    .Select(c => Enumerable.Range(0, 4).Select(i => c.Where(p => p.index == i).Sum(p => p.amount)).ToArray())
                     .ToList()
                 )
                 .ToArray();
